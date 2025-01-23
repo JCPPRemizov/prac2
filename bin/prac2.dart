@@ -11,6 +11,9 @@ class Player {
   List<List<String>> playerBattleField = List.generate(FIELD_LENGTH, 
       (_) => List.generate(FIELD_LENGTH, (_) => "[ ]", growable: false),
       growable: false);
+  int hits = 0;
+  int misses = 0;
+  int totalMoves = 0;
 }
 
 enum Position {
@@ -44,7 +47,6 @@ void main() {
 
   print("${firstPlayer.name}, заполните свое поле!");
   firstPlayer.playerField = fillPlayerBoard(firstPlayer.playerField);
-
 
   print("${secondPlayer.name}, заполните свое поле!");
   secondPlayer.playerField = fillPlayerBoard(secondPlayer.playerField);
@@ -143,18 +145,26 @@ void playGame(Player firstPlayer, Player secondPlayer) {
       continue;
     }
 
+    currentPlayer.totalMoves++;
+
     if (opponentPlayer.playerField[coord.y][coord.x] != "[ ]") {
       print("Попадание! Корабль противника поврежден.");
       currentPlayer.playerBattleField[coord.y][coord.x] = "[X]";
       opponentPlayer.playerField[coord.y][coord.x] = "[X]";
+      currentPlayer.hits++;
 
       if (checkAllShipsDestroyed(opponentPlayer.playerField)) {
         print("Игрок ${currentPlayer.name} победил! Все корабли противника уничтожены.");
+        saveStatistics(firstPlayer, secondPlayer);
         break;
       }
+
+      // Игрок сохраняет ход
+      continue;
     } else {
       print("Мимо! Вы промахнулись.");
       currentPlayer.playerBattleField[coord.y][coord.x] = "[O]";
+      currentPlayer.misses++;
     }
 
     Player temp = currentPlayer;
@@ -172,27 +182,15 @@ bool checkAllShipsDestroyed(List<List<String>> board) {
   return true;
 }
 
-List<List<String>> debugFillPlayerBoard(List<List<String>> board) {
-  List<Vector> debugPositions = [
-    Vector()..x = 0..y = 0,
-    Vector()..x = 2..y = 0,
-    Vector()..x = 4..y = 0,
-    Vector()..x = 6..y = 0,
-    Vector()..x = 0..y = 2,
-    Vector()..x = 3..y = 3
-  ];
-
-  for (int i = 0; i < debugPositions.length; i++) {
-    int shipSize = (i < shipTypeAmount.length) ? shipTypeAmount[i][1] : 1;
-    Vector pos = debugPositions[i];
-
-    for (int j = 0; j < shipSize; j++) {
-      if (pos.x + j < FIELD_LENGTH) {
-        board[pos.y][pos.x + j] = "[$shipSize]";
-      }
-    }
-  }
-  return board;
+void saveStatistics(Player firstPlayer, Player secondPlayer) {
+  final file = File('game_statistics.txt');
+  final now = DateTime.now();
+  final result = "Дата: $now\n" +
+      "Игрок 1: ${firstPlayer.name}\n" +
+      "  Попадания: ${firstPlayer.hits}, Промахи: ${firstPlayer.misses}, Ходы: ${firstPlayer.totalMoves}\n" +
+      "Игрок 2: ${secondPlayer.name}\n" +
+      "  Попадания: ${secondPlayer.hits}, Промахи: ${secondPlayer.misses}, Ходы: ${secondPlayer.totalMoves}\n\n";
+  file.writeAsStringSync(result, mode: FileMode.append);
 }
 
 Vector coordInput() {
