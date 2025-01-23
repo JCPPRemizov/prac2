@@ -182,8 +182,12 @@ bool checkAllShipsDestroyed(List<List<String>> board) {
   return true;
 }
 
-void saveStatistics(Player firstPlayer, Player secondPlayer) {
-  final file = File('game_statistics.txt');
+void saveStatistics(Player firstPlayer, Player secondPlayer) async {
+  final file = File('game-stat/game_statistics.txt');
+  var statDir = Directory("game-stat");
+  if (!await statDir.exists()){
+    Directory("game-stat").create();
+  }
   final now = DateTime.now();
   final result = "Дата: $now\n" +
       "Игрок 1: ${firstPlayer.name}\n" +
